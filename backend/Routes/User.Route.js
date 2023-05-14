@@ -7,6 +7,7 @@ const { UserModel } = require("../Models/User.model.js");
 
 const UserRouter = express.Router();
 
+//To register a user
 UserRouter.post("/register", async (req, res) => {
   const { nickname, password } = req.body;
 
@@ -33,64 +34,13 @@ UserRouter.post("/register", async (req, res) => {
   }
 });
 
-UserRouter.post("/login", async (req, res) => {
-  const { nickname, password } = req.body;
+// To add sleepstruggle data
 
-  const user = await UserModel.find({ nickname });
-
-  if (user.length > 0) {
-    bcrypt.compare(password, user[0].password, async (err, result) => {
-      if (result) {
-        try {
-          const token = jwt.sign(
-            { userID: user[0]._id },
-            process.env.userSecretKey
-          );
-          res.status(200).send({ message: "Login Successful", token: token });
-        } catch (e) {
-          res
-            .status(401)
-            .send({ message: "Something Went Wrong", err: e.message });
-        }
-      } else {
-        res
-          .status(201)
-          .send({ message: "Wrong Credentials", error: "Wrong Password" });
-      }
-    });
-  } else {
-    res
-      .status(201)
-      .send({ message: "User is not registered,Please register first" });
-  }
-});
-
-UserRouter.get("/user", userAuthentication, async (req, res) => {
-  const { userID } = req.body;
-  // console.log(userID);
-  try {
-    const user = await UserModel.findOne({ _id: userID });
-    res.status(200).send({ message: "User Details", user: user });
-  } catch (e) {
-    res.status(201).send({
-      message: "User is not authenticated,Please login first",
-      error: e,
-    });
-  }
-});
-
-// To get all the users details
-UserRouter.post("/setuser", async (req, res) => {
-  let user = new UserModel(req.body);
-  await user.save();
-  res.status(200).send({ message: "User Added",displayMessage: "Successful" });
-});
-
-UserRouter.post("/sleepStuggle", async (req, res) => {
-  let { username, userResponse } = req.body;
+UserRouter.post("/sleepStruggle", async (req, res) => {
+  let { nickname, userResponse } = req.body;
   await UserModel.findOneAndUpdate(
-    { username },
-    { sleepStuggle: userResponse }
+    { nickname },
+    { sleepStruggle: userResponse }
   );
   res
     .status(200)
@@ -99,10 +49,12 @@ UserRouter.post("/sleepStuggle", async (req, res) => {
       displayMessage: "Successful",
     });
 });
-UserRouter.post("/goTobed", async (req, res) => {
-  let { username, userResponse } = req.body;
 
-  await UserModel.findOneAndUpdate({ username }, { goTobed: userResponse });
+// To add goTobed data
+UserRouter.post("/goTobed", async (req, res) => {
+  let { nickname, userResponse } = req.body;
+
+  await UserModel.findOneAndUpdate({ nickname }, { goTobed: userResponse });
   res
     .status(200)
     .send({
@@ -110,10 +62,12 @@ UserRouter.post("/goTobed", async (req, res) => {
       displayMessage: "Successful",
     });
 });
-UserRouter.post("/getOutofBed", async (req, res) => {
-  let { username, userResponse } = req.body;
 
-  await UserModel.findOneAndUpdate({ username }, { getOutofBed: userResponse });
+// To add getOutofBed data
+UserRouter.post("/getOutofBed", async (req, res) => {
+  let { nickname, userResponse } = req.body;
+
+  await UserModel.findOneAndUpdate({ nickname }, { getOutofBed: userResponse });
   res
     .status(200)
     .send({
@@ -122,9 +76,10 @@ UserRouter.post("/getOutofBed", async (req, res) => {
     });
 });
 
+// To add sleepHours data
 UserRouter.post("/sleepHours", async (req, res) => {
-  let { username, userResponse } = req.body;
-  await UserModel.findOneAndUpdate({ username }, { sleepHours: userResponse });
+  let { nickname, userResponse } = req.body;
+  await UserModel.findOneAndUpdate({ nickname }, { sleepHours: userResponse });
   res
     .status(200)
     .send({
@@ -133,10 +88,11 @@ UserRouter.post("/sleepHours", async (req, res) => {
     });
 });
 
-UserRouter.get("/sleepEfficiency", async (req, res) => {
-  let { username } = req.body;
+//To calculate efficiency
+UserRouter.post("/sleepEfficiency", async (req, res) => {
+  let { nickname } = req.body;
 
-  let user = await UserModel.findOne({ username });
+  let user = await UserModel.findOne({ nickname });
   // console.log(user);
   let sleepHours = +user.sleepHours;
   let getOutofBed = user.getOutofBed; //[11:00 Am]
@@ -146,10 +102,10 @@ UserRouter.get("/sleepEfficiency", async (req, res) => {
     const [time, modifier] = Time.split(" ");
     let [hours, minutes] = Time.split(":");
 
-    if (modifier == "Pm" && hours < 12) {
+    if (modifier == "PM" && hours < 12) {
       hours = parseInt(hours) + 12;
     }
-    if (modifier == "Am" && hours == 12) {
+    if (modifier == "AM" && hours == 12) {
       hours = parseInt(hours) - 12;
     }
     return hours;
@@ -161,15 +117,11 @@ UserRouter.get("/sleepEfficiency", async (req, res) => {
   if (wakingTime < sleepingTime) {
     wakingTime = +wakingTime + 24;
   }
-  // console.log(sleepingTime);
-  // console.log(wakingTime);
-  // console.log(sleepHours);
 
   let sleepEfficiency = Math.ceil(
     (Number(sleepHours) * 100) / (Number(wakingTime) - Number(sleepingTime))
   );
 
-  // console.log(`${sleepEfficiency}%`);
   res
     .status(200)
     .send({ sleepEfficiency: sleepEfficiency, displayMessage: "Successful" });

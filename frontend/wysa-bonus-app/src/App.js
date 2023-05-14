@@ -1,10 +1,11 @@
-import logo from './logo.svg';
+
 import './App.css';
+import AllRoute from './Components/AllRoute';
 
 function App() {
   return (
     <div className="App">
-      <HomePa
+      <AllRoute/>
     </div>
   );
 }
